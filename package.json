@@ -54,7 +54,7 @@
     "fs-extra": "^9.0.1",
     "geolite2-redist": "^1.0.7",
     "got": "^11.8.1",
-    "helmet": "^4.3.1",
+    "helmet": "^5.1.1",
     "hibp": "^10.0.1",
     "ip-anonymize": "^0.1.0",
     "ip-range-check": "^0.2.0",
