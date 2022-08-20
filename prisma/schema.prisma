@@ -14,6 +14,15 @@ model User {
   gender               Gender               @default(UNKNOWN)
   id                   Int                  @id
   name                 String
+  firstName            String?
+  lastName             String?
+  nationality          String
+  birth_date           DateTime?
+  currency             Json?
+  settings             Json?
+  account              String?
+  balance              Int                  @default(0)
+  available_balance    Int                  @default(0)
   notificationEmail    NotificationEmail    @default(ACCOUNT)
   password             String?
   prefersLanguage      String               @default("en-us")
@@ -36,8 +45,12 @@ model User {
   backupCodes          BackupCode[]         @relation("userBackupCode")
   emails               Email[]              @relation("userEmail")
   identities           Identity[]           @relation("userIdentity")
+  transactions         Transaction[]        @relation("userTransactions")
   memberships          Membership[]         @relation("userMembership")
   sessions             Session[]            @relation("userSession")
+  kyc                  KYC[]                @relation("userKYCDocuments")
+  accounts             Account[]            @relation("userAccounts")
+  devices              Device[]             @relation("userDevices")
 
   @@index([prefersEmailId], name: "prefersEmailId")
 }
@@ -286,4 +299,101 @@ enum IdentityType {
   GOOGLE
   APPLE
   SLACK
+}
+
+enum TransactionStatus {
+  PENDING
+  FAILED
+  SUCCESSFUL
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  DRIVER_LICENCE
+  GOVERNMENT_ID
+  PASSPORT
+}
+
+model Transaction {
+  createdAt      DateTime          @default(now())
+  id             Int               @id @default(autoincrement())
+  updatedAt      DateTime          @updatedAt
+  credit_account String?
+  debit_account  String?
+  label          String?
+  type           String?
+  subtype        String?
+  amount         Int
+  account        String?
+  status         TransactionStatus
+  messages       String?
+  userId         Int
+  currency       Json?
+  metadata       Json?
+  user           User              @relation("userTransactions", fields: [userId], references: [id])
+
+  @@index([userId], name: "userId")
+}
+
+model KYC {
+  createdAt      DateTime      @default(now())
+  id             Int           @id @default(autoincrement())
+  updatedAt      DateTime      @updatedAt
+  expiresAt      DateTime      @updatedAt
+  status         KYCStatus
+  failure_reason String?
+  documentUrl    String?
+  userId         Int
+  documentType   DocumentType?
+  user           User          @relation("userKYCDocuments", fields: [userId], references: [id])
+
+  @@index([userId], name: "userId")
+}
+
+model Device {
+  createdAt   DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  updatedAt   DateTime @updatedAt
+  deviceToken String?
+  os          String?
+  deviceName  String?
+  version     String?
+  metadata    Json?
+  userId      Int
+  user        User     @relation("userDevices", fields: [userId], references: [id])
+}
+
+model Currency {
+  createdAt         DateTime  @default(now())
+  id                Int       @id @default(autoincrement())
+  updatedAt         DateTime  @updatedAt
+  currency          Json
+  balance           Int       @default(0)
+  available_balance Int       @default(0)
+  limits            Json?
+  fees              Json?
+  active            Boolean   @default(true)
+  accounts          Account[] @relation("userCurrencies")
+
+  archived Boolean?
+}
+
+model Account {
+  id         Int       @id @default(autoincrement())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  name       String
+  label      String?
+  reference  String?
+  definition String?
+  primary    Boolean?
+  userId     Int
+  user       User?     @relation("userAccounts", fields: [userId], references: [id])
+  currencyId Int
+  currencies Currency? @relation("userCurrencies", fields: [currencyId], references: [id])
 }
